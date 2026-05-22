@@ -4,7 +4,7 @@
   "description": "Plateforme interactive de gestion de livres",
   "main": "index.html",
   "scripts": {
-    "server": "json-server --watch db.json --port 3000"
+    "start": "json-server --watch db.json --port 3000"
   },
   "dependencies": {
     "json-server": "^0.17.4"
