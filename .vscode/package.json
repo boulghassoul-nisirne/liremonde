@@ -1,0 +1,12 @@
+{
+  "name": "liremonde-platform",
+  "version": "1.0.0",
+  "description": "Plateforme interactive de gestion de livres",
+  "main": "index.html",
+  "scripts": {
+    "server": "json-server --watch db.json --port 3000"
+  },
+  "dependencies": {
+    "json-server": "^0.17.4"
+  }
+}

@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LireMonde - Votre Bibliothèque Numérique</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .active-tab { border-bottom: 3px solid #3b82f6; color: #3b82f6; }
+        .book-card:hover { transform: translateY(-5px); transition: 0.3s; }
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex flex-wrap items-center justify-between">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="switchTab('home')">
+                <i class="fas fa-book-open text-blue-600 text-2xl"></i>
+                <span class="text-xl font-bold text-gray-800 tracking-tight">LireMonde</span>
+            </div>
+            
+            <div class="flex space-x-6 mt-4 sm:mt-0">
+                <button onclick="switchTab('home')" id="tab-home" class="font-medium hover:text-blue-500 transition active-tab">Accueil</button>
+                <button onclick="switchTab('list')" id="tab-list" class="font-medium hover:text-blue-500 transition">À lire</button>
+                <button onclick="switchTab('admin')" id="tab-admin" class="font-medium hover:text-blue-500 transition">Admin</button>
+            </div>
+
+            <div class="relative mt-4 md:mt-0 w-full md:w-64">
+                <input type="text" id="globalSearch" oninput="handleSearch(this.value)" placeholder="Rechercher un livre..." 
+                    class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-100">
+                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        
+        <!-- --- SECTION ACCUEIL --- -->
+        <section id="sec-home">
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                <h2 class="text-2xl font-bold text-gray-800">Découvrir les livres</h2>
+                <div class="flex items-center space-x-2 overflow-x-auto pb-2" id="genreFilters">
+                    <!-- Genres injectés dynamiquement -->
+                </div>
+            </div>
+            <div id="booksGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Livres injectés dynamiquement -->
+            </div>
+        </section>
+
+        <!-- --- SECTION LISTE À LIRE --- -->
+        <section id="sec-list" class="hidden">
+            <h2 class="text-2xl font-bold text-gray-800 mb-8">Ma Liste "À lire"</h2>
+            <div id="wishlistGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Wishlist injectée dynamiquement -->
+            </div>
+            <div id="emptyWishlist" class="text-center py-20 hidden">
+                <p class="text-gray-500 text-lg">Votre liste est vide. Ajoutez des livres depuis l'accueil !</p>
+            </div>
+        </section>
+
+        <!-- --- SECTION ADMIN --- -->
+        <section id="sec-admin" class="hidden">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 text-blue-600">Gestion de la Bibliothèque</h2>
+                <button onclick="openBookModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-plus mr-2"></i>Ajouter un livre
+                </button>
+            </div>
+            <div class="bg-white rounded-xl shadow overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-100 border-b">
+                        <tr>
+                            <th class="p-4">ID</th>
+                            <th class="p-4">Couverture</th>
+                            <th class="p-4">Titre / Auteur</th>
+                            <th class="p-4">Genre</th>
+                            <th class="p-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody">
+                        <!-- Lignes du tableau injectées dynamiquement -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- --- MODALE DÉTAILS --- -->
+    <div id="modalDetails" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-[100] p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full overflow-hidden flex flex-col md:flex-row relative">
+            <button onclick="closeModal('modalDetails')" class="absolute top-4 right-4 text-gray-500 hover:text-black text-2xl z-10">&times;</button>
+            <div class="md:w-1/2 h-64 md:h-auto overflow-hidden">
+                <img id="mCover" src="" class="w-full h-full object-cover" alt="">
+            </div>
+            <div class="md:w-1/2 p-8 flex flex-col">
+                <span id="mGenre" class="text-blue-600 font-semibold text-sm uppercase mb-2"></span>
+                <h3 id="mTitre" class="text-2xl font-bold mb-1 text-gray-900"></h3>
+                <p id="mAuteur" class="text-gray-600 mb-6 italic"></p>
+                <div class="flex-grow">
+                    <p id="mDesc" class="text-gray-700 leading-relaxed"></p>
+                </div>
+                <div id="mActionArea" class="mt-8">
+                    <!-- Bouton À lire injecté dynamiquement -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- MODALE AJOUT/MODIF (ADMIN) --- -->
+    <div id="modalForm" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-[100] p-4">
+        <div class="bg-white rounded-xl max-w-lg w-full p-8 relative">
+            <button onclick="closeModal('modalForm')" class="absolute top-4 right-4 text-gray-500 hover:text-black text-2xl">&times;</button>
+            <h3 id="formTitle" class="text-2xl font-bold mb-6">Ajouter un livre</h3>
+            <form id="bookForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <input type="hidden" id="bookId">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Titre</label>
+                    <input type="text" id="fTitre" required class="w-full p-2 border rounded mt-1">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Auteur</label>
+                    <input type="text" id="fAuteur" required class="w-full p-2 border rounded mt-1">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Genre</label>
+                    <select id="fGenre" required class="w-full p-2 border rounded mt-1">
+                        <option value="Classique">Classique</option>
+                        <option value="Science-fiction">Science-fiction</option>
+                        <option value="Drame">Drame</option>
+                        <option value="Fantasy">Fantasy</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Description</label>
+                    <textarea id="fDesc" rows="3" required class="w-full p-2 border rounded mt-1"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Lien Image Couverture</label>
+                    <input type="url" id="fCover" required class="w-full p-2 border rounded mt-1">
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="fALire" class="mr-2">
+                    <label for="fALire" class="text-sm font-medium">Ajouter à la liste "À lire"</label>
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeModal('modalForm')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Annuler</button>
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-10 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <div class="flex justify-center space-x-6 mb-6 text-2xl">
+                <i class="fab fa-facebook hover:text-blue-400 cursor-pointer"></i>
+                <i class="fab fa-twitter hover:text-blue-300 cursor-pointer"></i>
+                <i class="fab fa-instagram hover:text-pink-400 cursor-pointer"></i>
+            </div>
+            <p class="text-gray-400">© 2025 ReadSphere - LireMonde Platform. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <script>
+        const API_URL = 'http://localhost:3000/books';
+        let allBooks = [];
+        let currentFilter = 'Tout';
+        let currentSearch = '';
+
+        // --- INITIALISATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchBooks();
+        });
+
+        // --- FETCH DATA ---
+        async function fetchBooks() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error('Erreur réseau');
+                allBooks = await response.json();
+                renderUI();
+            } catch (error) {
+                console.error('Fetch error:', error);
+                alert('Impossible de charger les livres. Assurez-vous que json-server tourne !');
+            }
+        }
+
+        // --- RENDER FUNCTIONS ---
+        function renderUI() {
+            renderFilters();
+            renderHomeGrid();
+            renderWishlist();
+            renderAdminTable();
+        }
+
+        function renderFilters() {
+            const genres = ['Tout', ...new Set(allBooks.map(b => b.genre))];
+            const filterContainer = document.getElementById('genreFilters');
+            filterContainer.innerHTML = genres.map(g => `
+                <button onclick="applyFilter('${g}')" 
+                    class="px-4 py-1 rounded-full text-sm font-medium whitespace-nowrap ${currentFilter === g ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">
+                    ${g}
+                </button>
+            `).join('');
+        }
+
+        function renderHomeGrid() {
+            const grid = document.getElementById('booksGrid');
+            const filtered = allBooks.filter(b => {
+                const matchesGenre = currentFilter === 'Tout' || b.genre === currentFilter;
+                const matchesSearch = b.titre.toLowerCase().includes(currentSearch.toLowerCase()) || 
+                                     b.auteur.toLowerCase().includes(currentSearch.toLowerCase());
+                return matchesGenre && matchesSearch;
+            });
+
+            grid.innerHTML = filtered.map(book => `
+                <div class="book-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+                    <img src="${book.couverture}" alt="${book.titre}" class="w-full h-56 object-cover">
+                    <div class="p-5 flex-grow">
+                        <span class="text-xs font-bold text-blue-500 uppercase">${book.genre}</span>
+                        <h3 class="text-lg font-bold mt-1 line-clamp-1">${book.titre}</h3>
+                        <p class="text-sm text-gray-600 mb-4">${book.auteur}</p>
+                        <button onclick="viewDetails('${book.id}')" class="w-full py-2 bg-gray-50 border border-gray-200 rounded-lg font-medium hover:bg-blue-50 hover:text-blue-600 transition">Voir détails</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderWishlist() {
+            const grid = document.getElementById('wishlistGrid');
+            const emptyMsg = document.getElementById('emptyWishlist');
+            const wishlist = allBooks.filter(b => b.aLire);
+
+            if (wishlist.length === 0) {
+                grid.innerHTML = '';
+                emptyMsg.classList.remove('hidden');
+            } else {
+                emptyMsg.classList.add('hidden');
+                grid.innerHTML = wishlist.map(book => `
+                    <div class="bg-white p-4 rounded-xl shadow-sm flex items-center space-x-4 border border-gray-100">
+                        <img src="${book.couverture}" class="w-16 h-20 object-cover rounded shadow-sm">
+                        <div class="flex-grow">
+                            <h4 class="font-bold">${book.titre}</h4>
+                            <p class="text-xs text-gray-500">${book.auteur} • ${book.genre}</p>
+                        </div>
+                        <button onclick="toggleWishlist('${book.id}', false)" class="text-red-400 hover:text-red-600 p-2">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function renderAdminTable() {
+            const tbody = document.getElementById('adminTableBody');
+            tbody.innerHTML = allBooks.map(book => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-4 text-gray-500 text-sm">#${book.id}</td>
+                    <td class="p-4">
+                        <img src="${book.couverture}" class="w-10 h-14 object-cover rounded">
+                    </td>
+                    <td class="p-4">
+                        <div class="font-bold">${book.titre}</div>
+                        <div class="text-xs text-gray-500">${book.auteur}</div>
+                    </td>
+                    <td class="p-4">
+                        <span class="px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs font-semibold">${book.genre}</span>
+                    </td>
+                    <td class="p-4">
+                        <div class="flex space-x-2">
+                            <button onclick="editBook('${book.id}')" class="p-2 text-blue-500 hover:bg-blue-50 rounded"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteBook('${book.id}')" class="p-2 text-red-500 hover:bg-red-50 rounded"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // --- ACTIONS ---
+        function applyFilter(genre) {
+            currentFilter = genre;
+            renderUI();
+        }
+
+        function handleSearch(val) {
+            currentSearch = val;
+            renderHomeGrid();
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`sec-${tab}`).classList.remove('hidden');
+            
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-tab'));
+            document.getElementById(`tab-${tab}`).classList.add('active-tab');
+        }
+
+        async function viewDetails(id) {
+            const book = allBooks.find(b => b.id == id);
+            if (!book) return;
+
+            document.getElementById('mCover').src = book.couverture;
+            document.getElementById('mGenre').innerText = book.genre;
+            document.getElementById('mTitre').innerText = book.titre;
+            document.getElementById('mAuteur').innerText = book.auteur;
+            document.getElementById('mDesc').innerText = book.description;
+            
+            const actionArea = document.getElementById('mActionArea');
+            if (book.aLire) {
+                actionArea.innerHTML = `<button onclick="toggleWishlist('${book.id}', false); closeModal('modalDetails');" class="flex items-center space-x-2 px-6 py-3 bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 w-full justify-center transition">
+                    <i class="fas fa-bookmark"></i> <span>Retirer de la liste À lire</span></button>`;
+            } else {
+                actionArea.innerHTML = `<button onclick="toggleWishlist('${book.id}', true); closeModal('modalDetails');" class="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 w-full justify-center shadow-lg shadow-blue-200 transition">
+                    <i class="far fa-bookmark"></i> <span>Ajouter à la liste À lire</span></button>`;
+            }
+
+            document.getElementById('modalDetails').classList.remove('hidden');
+        }
+
+        async function toggleWishlist(id, status) {
+            try {
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ aLire: status })
+                });
+                if (response.ok) fetchBooks();
+            } catch (err) { alert('Erreur lors de la mise à jour.'); }
+        }
+
+        // --- CRUD ADMIN ---
+        function openBookModal(id = null) {
+            const modal = document.getElementById('modalForm');
+            const form = document.getElementById('bookForm');
+            form.reset();
+            document.getElementById('bookId').value = '';
+            document.getElementById('formTitle').innerText = "Ajouter un livre";
+
+            if (id) {
+                const book = allBooks.find(b => b.id == id);
+                document.getElementById('bookId').value = book.id;
+                document.getElementById('fTitre').value = book.titre;
+                document.getElementById('fAuteur').value = book.auteur;
+                document.getElementById('fGenre').value = book.genre;
+                document.getElementById('fDesc').value = book.description;
+                document.getElementById('fCover').value = book.couverture;
+                document.getElementById('fALire').checked = book.aLire;
+                document.getElementById('formTitle').innerText = "Modifier le livre";
+            }
+            modal.classList.remove('hidden');
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('bookId').value;
+            const data = {
+                titre: document.getElementById('fTitre').value,
+                auteur: document.getElementById('fAuteur').value,
+                genre: document.getElementById('fGenre').value,
+                description: document.getElementById('fDesc').value,
+                couverture: document.getElementById('fCover').value,
+                aLire: document.getElementById('fALire').checked
+            };
+
+            try {
+                const url = id ? `${API_URL}/${id}` : API_URL;
+                const method = id ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('modalForm');
+                    fetchBooks();
+                }
+            } catch (err) { alert('Erreur lors de l\'enregistrement.'); }
+        }
+
+        async function deleteBook(id) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer ce livre ?')) return;
+            try {
+                const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                if (response.ok) fetchBooks();
+            } catch (err) { alert('Erreur lors de la suppression.'); }
+        }
+
+        function editBook(id) {
+            openBookModal(id);
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
