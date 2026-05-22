@@ -4,173 +4,102 @@ let allBooks = [];
 let currentFilter = "Tout";
 let currentSearch = "";
 
-/* =========================
-   INITIALISATION
-========================= */
+/* INIT */
+document.addEventListener("DOMContentLoaded", fetchBooks);
 
-document.addEventListener("DOMContentLoaded", () => {
-  fetchBooks();
-});
-
-/* =========================
-   FETCH BOOKS
-========================= */
-
+/* FETCH */
 async function fetchBooks() {
   try {
-    const response = await fetch(API_URL);
+    const res = await fetch(API_URL);
+    if (!res.ok) throw new Error("API Error");
 
-    if (!response.ok) {
-      throw new Error("Erreur API");
-    }
-
-    allBooks = await response.json();
-
+    allBooks = await res.json();
     renderUI();
 
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error(err);
     alert("Impossible de charger les livres");
   }
 }
 
-/* =========================
-   RENDER UI
-========================= */
-
+/* RENDER ALL */
 function renderUI() {
   renderFilters();
-  renderHomeGrid();
+  renderHome();
   renderWishlist();
-  renderAdminTable();
+  renderAdmin();
 }
 
-/* =========================
-   FILTERS
-========================= */
-
+/* FILTERS */
 function renderFilters() {
-
-  const genres = [
-    "Tout",
-    ...new Set(allBooks.map(book => book.genre))
-  ];
-
+  const genres = ["Tout", ...new Set(allBooks.map(b => b.genre))];
   const container = document.getElementById("genreFilters");
 
   container.innerHTML = "";
 
   genres.forEach(genre => {
+    const btn = document.createElement("button");
 
-    const button = document.createElement("button");
-
-    button.textContent = genre;
-
-    button.className =
-      currentFilter === genre
-        ? "px-4 py-1 rounded-full bg-blue-600 text-white"
-        : "px-4 py-1 rounded-full bg-gray-200 text-gray-700";
-
-    button.onclick = () => applyFilter(genre);
-
-    container.appendChild(button);
-
-  });
-
-}
-
-function applyFilter(genre) {
+    btn.textContent = genre;
+   btn.className = currentFilter === genre
+  ? "px-4 py-2 rounded-full bg-blue-600 text-white font-semibold shadow"
+  : "px-4 py-2 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 transition";
+   btn.onclick = () => {
   currentFilter = genre;
-  renderHomeGrid();
+
+  renderFilters();
+  renderHome();
+};
+
+    container.appendChild(btn);
+  });
 }
 
-/* =========================
-   SEARCH
-========================= */
-
+/* SEARCH */
 function handleSearch(value) {
-  currentSearch = value;
-  renderHomeGrid();
+  currentSearch = value.toLowerCase();
+  renderHome();
 }
-
-/* =========================
-   HOME GRID
-========================= */
-
-function renderHomeGrid() {
-
+/* HOME */
+function renderHome() {
   const grid = document.getElementById("booksGrid");
-
   grid.innerHTML = "";
 
-  const filteredBooks = allBooks.filter(book => {
-
-    const matchGenre =
-      currentFilter === "Tout" ||
-      book.genre === currentFilter;
+  const books = allBooks.filter(b => {
+    const matchFilter =
+      currentFilter === "Tout" || b.genre === currentFilter;
 
     const matchSearch =
-      book.titre.toLowerCase().includes(currentSearch.toLowerCase()) ||
-      book.auteur.toLowerCase().includes(currentSearch.toLowerCase());
+      b.titre.toLowerCase().includes(currentSearch) ||
+      b.auteur.toLowerCase().includes(currentSearch);
 
-    return matchGenre && matchSearch;
-
+    return matchFilter && matchSearch;
   });
 
-  filteredBooks.forEach(book => {
+  books.forEach(book => {
+    const div = document.createElement("div");
+    div.className = "book-card bg-white rounded-xl shadow overflow-hidden";
 
-    const card = document.createElement("div");
-
-    card.className =
-      "book-card bg-white rounded-xl shadow-sm border overflow-hidden";
-
-    card.innerHTML = `
-      <img
-        src="${book.couverture}"
-        class="w-full h-56 object-cover"
-      >
-
-      <div class="p-5">
-
-        <span class="text-xs font-bold text-blue-500 uppercase">
-          ${book.genre}
-        </span>
-
-        <h3 class="text-lg font-bold mt-1">
-          ${book.titre}
-        </h3>
-
-        <p class="text-sm text-gray-600 mb-4">
-          ${book.auteur}
-        </p>
-
-        <button
-          class="w-full py-2 bg-blue-600 text-white rounded-lg">
+    div.innerHTML = `
+      <img src="${book.couverture}" class="w-full h-56 object-cover">
+      <div class="p-4">
+        <h3 class="font-bold">${book.titre}</h3>
+        <p class="text-sm text-gray-600">${book.auteur}</p>
+        <button class="mt-3 w-full bg-blue-600 text-white py-2 rounded">
           Voir détails
         </button>
-
       </div>
     `;
 
-    card.querySelector("button")
-      .addEventListener("click", () => {
-        viewDetails(book.id);
-      });
+    div.querySelector("button").onclick = () => viewDetails(book.id);
 
-    grid.appendChild(card);
-
+    grid.appendChild(div);
   });
-
 }
 
-/* =========================
-   DETAILS
-========================= */
-
+/* DETAILS */
 function viewDetails(id) {
-
-  const book = allBooks.find(book => book.id == id);
-
+  const book = allBooks.find(b => b.id == id);
   if (!book) return;
 
   document.getElementById("mCover").src = book.couverture;
@@ -179,309 +108,176 @@ function viewDetails(id) {
   document.getElementById("mAuteur").textContent = book.auteur;
   document.getElementById("mDesc").textContent = book.description;
 
-  document
-    .getElementById("modalDetails")
-    .classList.remove("hidden");
-
+  document.getElementById("modalDetails").classList.remove("hidden");
 }
 
-/* =========================
-   WISHLIST
-========================= */
-
+/* WISHLIST */
 function renderWishlist() {
-
   const grid = document.getElementById("wishlistGrid");
-
   const empty = document.getElementById("emptyWishlist");
 
-  const wishlist = allBooks.filter(book => book.aLire);
+  const list = allBooks.filter(b => b.aLire);
 
   grid.innerHTML = "";
 
-  if (wishlist.length === 0) {
-
+  if (!list.length) {
     empty.classList.remove("hidden");
-
     return;
   }
 
   empty.classList.add("hidden");
 
-  wishlist.forEach(book => {
+  list.forEach(book => {
+    const div = document.createElement("div");
+    div.className = "bg-white p-4 rounded-xl shadow flex gap-3 items-center";
 
-    const card = document.createElement("div");
-
-    card.className =
-      "bg-white p-4 rounded-xl shadow flex items-center gap-4";
-
-    card.innerHTML = `
-      <img
-        src="${book.couverture}"
-        class="w-16 h-20 object-cover rounded"
-      >
-
-      <div class="flex-grow">
+    div.innerHTML = `
+      <img src="${book.couverture}" class="w-16 h-20 object-cover rounded">
+      <div>
         <h4 class="font-bold">${book.titre}</h4>
         <p class="text-sm text-gray-500">${book.auteur}</p>
       </div>
-
-      <button class="text-red-500">
-        <i class="fas fa-trash"></i>
-      </button>
+      <button class="text-red-500">🗑</button>
     `;
 
-    card.querySelector("button")
-      .addEventListener("click", () => {
-        toggleWishlist(book.id, false);
-      });
+    div.querySelector("button").onclick =
+      () => toggleWishlist(book.id, false);
 
-    grid.appendChild(card);
-
+    grid.appendChild(div);
   });
-
 }
 
+/* TOGGLE WISHLIST */
 async function toggleWishlist(id, status) {
-
   try {
-
-    const response = await fetch(`${API_URL}/${id}`, {
+    await fetch(`${API_URL}/${id}`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        aLire: status
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ aLire: status })
     });
 
-    if (response.ok) {
-      fetchBooks();
-    }
+    fetchBooks();
 
-  } catch (error) {
-
-    console.error(error);
-
+  } catch (err) {
+    console.error(err);
   }
-
 }
 
-/* =========================
-   ADMIN TABLE
-========================= */
-
-function renderAdminTable() {
-
+/* ADMIN */
+function renderAdmin() {
   const tbody = document.getElementById("adminTableBody");
-
   tbody.innerHTML = "";
 
   allBooks.forEach(book => {
-
     const tr = document.createElement("tr");
 
-    tr.className = "border-b";
-
     tr.innerHTML = `
-      <td class="p-4">#${book.id}</td>
-
-      <td class="p-4">
-        <img
-          src="${book.couverture}"
-          class="w-12 h-16 object-cover rounded"
-        >
-      </td>
-
-      <td class="p-4">
-        <div class="font-bold">${book.titre}</div>
-        <div class="text-sm text-gray-500">${book.auteur}</div>
-      </td>
-
-      <td class="p-4">${book.genre}</td>
-
-      <td class="p-4 flex gap-3">
-
-        <button class="editBtn text-blue-500">
-          <i class="fas fa-edit"></i>
-        </button>
-
-        <button class="deleteBtn text-red-500">
-          <i class="fas fa-trash"></i>
-        </button>
-
+      <td>#${book.id}</td>
+      <td><img src="${book.couverture}" class="w-12 h-16"></td>
+      <td>${book.titre}</td>
+      <td>${book.genre}</td>
+      <td>
+        <button class="edit">✏️</button>
+        <button class="del">🗑</button>
       </td>
     `;
 
-    tr.querySelector(".editBtn")
-      .addEventListener("click", () => {
-        editBook(book.id);
-      });
-
-    tr.querySelector(".deleteBtn")
-      .addEventListener("click", () => {
-        deleteBook(book.id);
-      });
+    tr.querySelector(".edit").onclick = () => editBook(book.id);
+    tr.querySelector(".del").onclick = () => deleteBook(book.id);
 
     tbody.appendChild(tr);
-
   });
-
 }
 
-/* =========================
-   OPEN MODAL
-========================= */
-
+/* MODAL */
 function openBookModal(id = null) {
-
   const modal = document.getElementById("modalForm");
-
   const form = document.getElementById("bookForm");
 
   form.reset();
-
   document.getElementById("bookId").value = "";
 
-  document.getElementById("formTitle").textContent =
-    "Ajouter un livre";
-
   if (id) {
+    const b = allBooks.find(x => x.id == id);
 
-    const book = allBooks.find(book => book.id == id);
-
-    document.getElementById("bookId").value = book.id;
-    document.getElementById("fTitre").value = book.titre;
-    document.getElementById("fAuteur").value = book.auteur;
-    document.getElementById("fGenre").value = book.genre;
-    document.getElementById("fDesc").value = book.description;
-    document.getElementById("fCover").value = book.couverture;
-    document.getElementById("fALire").checked = book.aLire;
-
-    document.getElementById("formTitle").textContent =
-      "Modifier le livre";
+    document.getElementById("bookId").value = b.id;
+    document.getElementById("fTitre").value = b.titre;
+    document.getElementById("fAuteur").value = b.auteur;
+    document.getElementById("fGenre").value = b.genre;
+    document.getElementById("fDesc").value = b.description;
+    document.getElementById("fCover").value = b.couverture;
+    document.getElementById("fALire").checked = b.aLire;
   }
 
   modal.classList.remove("hidden");
-
 }
 
-/* =========================
-   ADD / UPDATE
-========================= */
-
-async function handleFormSubmit(event) {
-
-  event.preventDefault();
+/* ADD / UPDATE */
+async function handleFormSubmit(e) {
+  e.preventDefault();
 
   const id = document.getElementById("bookId").value;
 
   const data = {
-    titre: document.getElementById("fTitre").value,
-    auteur: document.getElementById("fAuteur").value,
-    genre: document.getElementById("fGenre").value,
-    description: document.getElementById("fDesc").value,
-    couverture: document.getElementById("fCover").value,
-    aLire: document.getElementById("fALire").checked
+    titre: fTitre.value,
+    auteur: fAuteur.value,
+    genre: fGenre.value,
+    description: fDesc.value,
+    couverture: fCover.value,
+    aLire: fALire.checked
   };
 
-  try {
+  await fetch(id ? `${API_URL}/${id}` : API_URL, {
+    method: id ? "PUT" : "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
 
-    const url = id
-      ? `${API_URL}/${id}`
-      : API_URL;
-
-    const method = id
-      ? "PUT"
-      : "POST";
-
-    const response = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
-    });
-
-    if (response.ok) {
-
-      closeModal("modalForm");
-
-      fetchBooks();
-
-    }
-
-  } catch (error) {
-
-    console.error(error);
-
-  }
-
+  closeModal("modalForm");
+  fetchBooks();
 }
 
-/* =========================
-   DELETE
-========================= */
-
+/* DELETE */
 async function deleteBook(id) {
+  if (!confirm("Supprimer ce livre ?")) return;
 
-  const confirmDelete =
-    confirm("Supprimer ce livre ?");
-
-  if (!confirmDelete) return;
-
-  try {
-
-    const response = await fetch(`${API_URL}/${id}`, {
-      method: "DELETE"
-    });
-
-    if (response.ok) {
-      fetchBooks();
-    }
-
-  } catch (error) {
-
-    console.error(error);
-
-  }
-
+  await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+  fetchBooks();
 }
 
-/* =========================
-   EDIT
-========================= */
+/* TABS */
+function switchTab(tab) {
 
+  // hide all sections
+  document.querySelectorAll("main section").forEach(s => {
+    s.classList.add("hidden");
+  });
+
+  // show selected section
+  const section = document.getElementById(`sec-${tab}`);
+  if (section) section.classList.remove("hidden");
+
+  // remove active from all buttons
+  document.querySelectorAll("nav button").forEach(btn => {
+    btn.classList.remove("active-tab");
+  });
+
+  // add active to clicked button
+  const activeBtn = document.getElementById(`tab-${tab}`);
+  if (activeBtn) {
+    activeBtn.classList.add("active-tab");
+  }
+}
+
+/* CLOSE MODAL */
+function closeModal(id) {
+  document.getElementById(id).classList.add("hidden");
+}
+
+/* EDIT */
 function editBook(id) {
   openBookModal(id);
 }
-
-/* =========================
-   TABS
-========================= */
-
-function switchTab(tab) {
-
-  document.querySelectorAll("section")
-    .forEach(section => {
-      section.classList.add("hidden");
-    });
-
-  document
-    .getElementById(`sec-${tab}`)
-    .classList.remove("hidden");
-
-}
-
-/* =========================
-   CLOSE MODAL
-========================= */
-
-function closeModal(modalId) {
-
-  document
-    .getElementById(modalId)
-    .classList.add("hidden");
-
-}
+document.addEventListener("DOMContentLoaded", () => {
+  switchTab("home");
+});

@@ -1,23 +1,14 @@
 {
   "books": [
-    {
-      "id": "1",
-      "titre": "1984",
-      "auteur": "George Orwell",
-      "genre": "Science-fiction",
-      "description": "Une dystopie glaçante sur un futur totalitaire sous la surveillance du Big Brother.",
-      "couverture": "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1532714506i/40961427.jpg",
-      "aLire": false
-    },
-    {
-      "id": "2",
-      "titre": "Le Comte de Monte-Cristo",
-      "auteur": "Alexandre Dumas",
-      "genre": "Classique",
-      "description": "Une histoire épique de trahison, de richesse et de vengeance.",
-      "couverture": "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1611834134i/56842455.jpg",
-      "aLire": false
-    },
+   {
+  "titre": "Le Comte de Monte-Cristo",
+  "auteur": "Alexandre Dumas",
+  "genre": "Classique",
+  "description": "Une histoire épique de trahison, de richesse et de vengeance.",
+  "couverture": "https://covers.openlibrary.org/b/id/12617413-L.jpg",
+  "aLire": false,
+  "id": "2"
+},
     {
       "id": "3",
       "titre": "Le Petit Prince",
@@ -25,7 +16,7 @@
       "genre": "Classique",
       "description": "Un conte philosophique qui explore la nature humaine à travers les yeux d'un enfant.",
       "couverture": "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1367545443i/157993.jpg",
-      "aLire": true
+      "aLire": false
     },
     {
       "id": "4",
@@ -34,7 +25,7 @@
       "genre": "Science-fiction",
       "description": "Sur la planète Arrakis, le destin de l'humanité se joue entre sable et épices.",
       "couverture": "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1555447414i/44767458.jpg",
-      "aLire": true
+      "aLire": false
     },
     {
       "id": "5",
@@ -43,7 +34,7 @@
       "genre": "Fantasy",
       "description": "Une quête héroïque pour détruire l'Anneau Unique et sauver la Terre du Milieu.",
       "couverture": "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1566425108i/33.jpg",
-      "aLire": true
+      "aLire": false
     },
     {
       "id": "6",
@@ -54,5 +45,6 @@
       "couverture": "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1411852091i/24280.jpg",
       "aLire": false
     }
-  ]
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
 }
